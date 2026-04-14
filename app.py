@@ -19,23 +19,136 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-def local_logic(user_msg: str):
-    low = user_msg.lower()
+class Memory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(50), unique=True, nullable=False)
+    value = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    if "ciao" in low:
-        return "Ciao. Sono Jarvis. Il sito è online e funziona senza PowerShell."
-    elif "chi sei" in low:
-        return "Sono Jarvis, il tuo assistente web."
-    elif "ti ricordi" in low or "memoria" in low or "cronologia" in low:
-        return "Posso salvare e mostrare la cronologia delle conversazioni."
-    elif "progetto" in low or "obiettivo" in low or "obbiettivo" in low:
-        return "Il nostro progetto è creare una web app Jarvis online, con cronologia e una grafica migliore."
-    elif "online" in low:
-        return "Sì, il sito è online e puoi aprirlo senza avviare PowerShell."
-    elif "powershell" in low:
-        return "No, per usare il sito online non serve aprire PowerShell."
+
+def save_memory(key, value):
+    item = Memory.query.filter_by(key=key).first()
+    if item:
+        item.value = value
     else:
-        return "Sono online e funziono. Per ora uso una logica locale semplice invece di un'AI a pagamento."
+        item = Memory(key=key, value=value)
+        db.session.add(item)
+    db.session.commit()
+
+
+def get_memory(key):
+    item = Memory.query.filter_by(key=key).first()
+    return item.value if item else None
+
+
+def recent_user_messages(limit=5):
+    msgs = Message.query.filter_by(sender="user").order_by(Message.timestamp.desc()).limit(limit).all()
+    return [m.content for m in reversed(msgs)]
+
+
+def extract_memory(user_msg):
+    low = user_msg.lower().strip()
+
+    if low.startswith("mi chiamo "):
+        name = user_msg[10:].strip()
+        if name:
+            save_memory("name", name)
+            return f"Va bene, ricorderò che ti chiami {name}."
+
+    if low.startswith("il nostro obiettivo è "):
+        goal = user_msg[24:].strip()
+        if goal:
+            save_memory("goal", goal)
+            return "Perfetto, ho salvato il nostro obiettivo."
+
+    if low.startswith("il progetto è "):
+        project = user_msg[14:].strip()
+        if project:
+            save_memory("project", project)
+            return "Perfetto, ho salvato il progetto."
+
+    if low.startswith("ricorda che "):
+        note = user_msg[12:].strip()
+        if note:
+            old = get_memory("notes")
+            new_notes = f"{old} | {note}" if old else note
+            save_memory("notes", new_notes)
+            return "Va bene, lo terrò a mente."
+
+    return None
+
+
+def local_logic(user_msg: str):
+    low = user_msg.lower().strip()
+
+    remembered = extract_memory(user_msg)
+    if remembered:
+        return remembered
+
+    name = get_memory("name")
+    goal = get_memory("goal")
+    project = get_memory("project")
+    notes = get_memory("notes")
+    recent = recent_user_messages()
+
+    if "ciao" in low or "salve" in low:
+        if name:
+            return f"Ciao {name}. Sono Jarvis. Il sito è online e funziono senza PowerShell."
+        return "Ciao. Sono Jarvis. Il sito è online e funziono senza PowerShell."
+
+    if "chi sei" in low:
+        return "Sono Jarvis, il tuo assistente web con cronologia e memoria locale."
+
+    if "come mi chiamo" in low:
+        if name:
+            return f"Ti chiami {name}."
+        return "Non me l'hai ancora detto chiaramente. Scrivimi: mi chiamo ..."
+
+    if "ti ricordi" in low and "obiettivo" in low:
+        if goal:
+            return f"Sì. Il nostro obiettivo è: {goal}"
+        return "Non ho ancora salvato un obiettivo preciso. Scrivimi: il nostro obiettivo è ..."
+
+    if "ti ricordi" in low and "progetto" in low:
+        if project:
+            return f"Sì. Il progetto è: {project}"
+        return "Non ho ancora salvato il progetto in modo preciso. Scrivimi: il progetto è ..."
+
+    if "ti ricordi" in low and ("cosa abbiamo detto" in low or "cosa ci siamo detti" in low):
+        if recent:
+            joined = " | ".join(recent[-3:])
+            return f"Ricordo gli ultimi messaggi principali: {joined}"
+        return "Per ora non ho ancora abbastanza cronologia da riassumere."
+
+    if "cronologia" in low or "memoria" in low:
+        response = "Posso salvare nome, obiettivo, progetto e note. Inoltre conservo la cronologia nella sezione dedicata."
+        if notes:
+            response += f" Note salvate: {notes}"
+        return response
+
+    if "online" in low:
+        return "Sì, il sito è online e puoi aprirlo senza avviare PowerShell."
+
+    if "powershell" in low:
+        return "No, per usare il sito online non serve aprire PowerShell. Serviva solo per svilupparlo in locale."
+
+    if "cosa sai fare" in low:
+        return "Posso chattare, salvare cronologia, ricordare alcune informazioni chiave e restare online come sito."
+
+    if "ai" in low or "intelligenza artificiale" in low:
+        return "Per ora uso una logica locale avanzata, non un modello AI a pagamento. Però posso ricordare informazioni importanti e rispondere in modo più utile."
+
+    if "progetto" in low:
+        if project:
+            return f"Il progetto attuale è: {project}"
+        return "Stiamo costruendo una web app Jarvis online con cronologia, memoria e grafica migliorabile."
+
+    if "obiettivo" in low or "obbiettivo" in low:
+        if goal:
+            return f"Il nostro obiettivo è: {goal}"
+        return "Il nostro obiettivo generale è creare una web app Jarvis online, utile e più intelligente."
+
+    return "Ho capito il messaggio. Posso ricordare meglio se mi scrivi frasi come: 'mi chiamo ...', 'il nostro obiettivo è ...', 'il progetto è ...', oppure 'ricorda che ...'"
 
 
 @app.route('/')
