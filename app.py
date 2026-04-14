@@ -23,19 +23,19 @@ def local_logic(user_msg: str):
     low = user_msg.lower()
 
     if "ciao" in low:
-        return "Ciao. Sono Jarvis. Il sito è online e funziono senza dover avviare PowerShell."
+        return "Ciao. Sono Jarvis. Il sito è online e funziona senza PowerShell."
     elif "chi sei" in low:
         return "Sono Jarvis, il tuo assistente web."
     elif "ti ricordi" in low or "memoria" in low or "cronologia" in low:
-        return "Posso salvare la cronologia nel sito e mostrarla nella sezione dedicata."
+        return "Posso salvare e mostrare la cronologia delle conversazioni."
     elif "progetto" in low or "obiettivo" in low or "obbiettivo" in low:
-        return "Il nostro progetto è creare una web app Jarvis bella, online, con cronologia e in futuro con AI completa."
+        return "Il nostro progetto è creare una web app Jarvis online, con cronologia e una grafica migliore."
     elif "online" in low:
-        return "Sì, il sito è online su Render e puoi aprirlo senza PowerShell."
+        return "Sì, il sito è online e puoi aprirlo senza avviare PowerShell."
     elif "powershell" in low:
-        return "No, per aprire il sito online non devi usare PowerShell. Quello serviva solo per svilupparlo in locale."
+        return "No, per usare il sito online non serve aprire PowerShell."
     else:
-        return "Sono online e funziono. Per ora uso una logica locale semplice, ma il sito è accessibile senza accendere PowerShell."
+        return "Sono online e funziono. Per ora uso una logica locale semplice invece di un'AI a pagamento."
 
 
 @app.route('/')
