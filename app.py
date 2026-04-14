@@ -1,7 +1,6 @@
 from flask import Flask, send_from_directory, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from openai import OpenAI
 import os
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -12,9 +11,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
-client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
-
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -23,26 +19,23 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-def build_prompt(user_msg: str):
-    history = Message.query.order_by(Message.timestamp.asc()).limit(12).all()
+def local_logic(user_msg: str):
+    low = user_msg.lower()
 
-    parts = [
-        "Ti chiami Jarvis.",
-        "Rispondi sempre in italiano.",
-        "Sei utile, chiaro, naturale e ricordi il contesto recente.",
-        "L'utente sta costruendo una web app Jarvis con backend Flask, database e cronologia.",
-        "",
-        "Cronologia recente:"
-    ]
-
-    for m in history:
-        who = "Utente" if m.sender == "user" else "Jarvis"
-        parts.append(f"{who}: {m.content}")
-
-    parts.append("")
-    parts.append(f"Utente: {user_msg}")
-
-    return "\n".join(parts)
+    if "ciao" in low:
+        return "Ciao. Sono Jarvis. Il sito è online e funziono senza dover avviare PowerShell."
+    elif "chi sei" in low:
+        return "Sono Jarvis, il tuo assistente web."
+    elif "ti ricordi" in low or "memoria" in low or "cronologia" in low:
+        return "Posso salvare la cronologia nel sito e mostrarla nella sezione dedicata."
+    elif "progetto" in low or "obiettivo" in low or "obbiettivo" in low:
+        return "Il nostro progetto è creare una web app Jarvis bella, online, con cronologia e in futuro con AI completa."
+    elif "online" in low:
+        return "Sì, il sito è online su Render e puoi aprirlo senza PowerShell."
+    elif "powershell" in low:
+        return "No, per aprire il sito online non devi usare PowerShell. Quello serviva solo per svilupparlo in locale."
+    else:
+        return "Sono online e funziono. Per ora uso una logica locale semplice, ma il sito è accessibile senza accendere PowerShell."
 
 
 @app.route('/')
@@ -58,17 +51,7 @@ def chat():
     if not user_msg:
         return jsonify({"response": "Scrivi un messaggio."})
 
-    if client:
-        try:
-            response_obj = client.responses.create(
-                model="gpt-5.4",
-                input=build_prompt(user_msg)
-            )
-            response = response_obj.output_text.strip()
-        except Exception as e:
-            response = f"AI temporaneamente non disponibile: {e}"
-    else:
-        response = "Il sito è online, ma manca la chiave API dell'AI sul server."
+    response = local_logic(user_msg)
 
     db.session.add(Message(sender="user", content=user_msg))
     db.session.add(Message(sender="jarvis", content=response))
