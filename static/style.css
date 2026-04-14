@@ -1,0 +1,162 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #0b1220;
+    color: #eaf2ff;
+}
+
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 220px;
+    background: #111a2e;
+    padding: 24px;
+    border-right: 1px solid #24314d;
+}
+
+.sidebar h2 {
+    color: #6fd3ff;
+    margin-bottom: 24px;
+}
+
+.sidebar a {
+    display: block;
+    color: #dce8ff;
+    text-decoration: none;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: #16233d;
+}
+
+.sidebar a:hover {
+    background: #203050;
+}
+
+.main {
+    flex: 1;
+    padding: 24px;
+}
+
+.topbar {
+    margin-bottom: 24px;
+}
+
+.topbar h1 {
+    font-size: 28px;
+    color: #6fd3ff;
+    margin-bottom: 8px;
+}
+
+.topbar p {
+    color: #b7c7e6;
+}
+
+.chat-box {
+    background: #111a2e;
+    border: 1px solid #24314d;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 420px;
+    max-height: 420px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.message {
+    display: flex;
+    margin-bottom: 14px;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.jarvis {
+    justify-content: flex-start;
+}
+
+.bubble {
+    max-width: 70%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    line-height: 1.5;
+}
+
+.user .bubble {
+    background: #1e90ff;
+    color: white;
+}
+
+.jarvis .bubble {
+    background: #1b2740;
+    color: #eaf2ff;
+    border: 1px solid #2f446b;
+}
+
+.input-area {
+    display: flex;
+    gap: 12px;
+}
+
+.input-area input {
+    flex: 1;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #2a3a5f;
+    background: #111a2e;
+    color: white;
+}
+
+.input-area button {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    background: #00b7ff;
+    color: #08111f;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.input-area button:hover {
+    background: #44cbff;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.history-item {
+    background: #111a2e;
+    border: 1px solid #24314d;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.history-item.user {
+    border-left: 5px solid #1e90ff;
+}
+
+.history-item.jarvis {
+    border-left: 5px solid #00d084;
+}
+
+.history-item p {
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+.history-item span {
+    font-size: 12px;
+    color: #9eb0d1;
+}

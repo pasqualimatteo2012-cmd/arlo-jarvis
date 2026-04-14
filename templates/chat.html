@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronologia Jarvis</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <h2>Jarvis</h2>
+            <a href="/">Chat</a>
+            <a href="/history">Cronologia</a>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <h1>Cronologia conversazioni</h1>
+                <p>Tutti i messaggi salvati nel database</p>
+            </header>
+
+            <section class="history-list">
+                {% for message in messages %}
+                    <div class="history-item {{ message.sender }}">
+                        <div>
+                            <strong>{{ "Tu" if message.sender == "user" else "Jarvis" }}</strong>
+                            <p>{{ message.content }}</p>
+                        </div>
+                        <span>{{ message.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</span>
+                    </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+</body>
+</html>
