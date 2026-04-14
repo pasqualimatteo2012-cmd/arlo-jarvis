@@ -41,7 +41,6 @@ def build_prompt(user_msg: str):
 
     parts.append("")
     parts.append(f"Utente: {user_msg}")
-    parts.append("Jarvis:")
 
     return "\n".join(parts)
 
@@ -89,5 +88,4 @@ if __name__ == "__main__":
         db.create_all()
 
     port = int(os.environ.get("PORT", 5000))
-    print(f"Jarvis avviato su http://127.0.0.1:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
