@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-import requests
+from openai import OpenAI
 import os
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -12,8 +12,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "").strip()
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3.5:latest")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
+client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 
 class Message(db.Model):
@@ -23,26 +23,27 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-def build_messages(user_msg: str):
+def build_prompt(user_msg: str):
     history = Message.query.order_by(Message.timestamp.asc()).limit(12).all()
 
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "Ti chiami Jarvis. Sei un assistente personale locale. "
-                "Rispondi in italiano in modo chiaro, utile e naturale. "
-                "L'utente sta costruendo una web app Jarvis con Flask, database, cronologia e interfaccia grafica."
-            )
-        }
+    parts = [
+        "Ti chiami Jarvis.",
+        "Rispondi sempre in italiano.",
+        "Sei utile, chiaro, naturale e ricordi il contesto recente.",
+        "L'utente sta costruendo una web app Jarvis con backend Flask, database e cronologia.",
+        "",
+        "Cronologia recente:"
     ]
 
     for m in history:
-        role = "user" if m.sender == "user" else "assistant"
-        messages.append({"role": role, "content": m.content})
+        who = "Utente" if m.sender == "user" else "Jarvis"
+        parts.append(f"{who}: {m.content}")
 
-    messages.append({"role": "user", "content": user_msg})
-    return messages
+    parts.append("")
+    parts.append(f"Utente: {user_msg}")
+    parts.append("Jarvis:")
+
+    return "\n".join(parts)
 
 
 @app.route('/')
@@ -58,21 +59,17 @@ def chat():
     if not user_msg:
         return jsonify({"response": "Scrivi un messaggio."})
 
-    if OLLAMA_URL:
+    if client:
         try:
-            payload = {
-                "model": OLLAMA_MODEL,
-                "messages": build_messages(user_msg),
-                "stream": False
-            }
-            r = requests.post(OLLAMA_URL, json=payload, timeout=120)
-            r.raise_for_status()
-            result = r.json()
-            response = result["message"]["content"].strip()
+            response_obj = client.responses.create(
+                model="gpt-5.4",
+                input=build_prompt(user_msg)
+            )
+            response = response_obj.output_text.strip()
         except Exception as e:
             response = f"AI temporaneamente non disponibile: {e}"
     else:
-        response = "Sito online correttamente. La parte AI locale non è configurata su questo server."
+        response = "Il sito è online, ma manca la chiave API dell'AI sul server."
 
     db.session.add(Message(sender="user", content=user_msg))
     db.session.add(Message(sender="jarvis", content=response))
